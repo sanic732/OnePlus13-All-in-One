@@ -91,7 +91,7 @@ This module is a combined fork of the following projects:
 | Signal Fix | K58 (Fly) | GPLv3 | [K58/fix-signal-oneplus13](https://github.com/K58/fix-signal-oneplus13) |
 | Signal Fix (post-fs-data) | rapperskull | Apache-2.0 | [K58/fix-signal-oneplus13](https://github.com/K58/fix-signal-oneplus13) |
 | VoLTE/WiFi Calling | Ali Beyaz (symbuzzer) | GPLv3 | [symbuzzer/Volte-Wifi-Calling-Enabler](https://github.com/symbuzzer/Volte-Wifi-Calling-Enabler) |
-| IMEI Backup | [Sanic27](https://github.com/sanic732) | GPLv3 | This project |
+| IMEI Backup | [Sanic732](https://github.com/sanic732) | GPLv3 | This project |
 
 ### Thanks
 
