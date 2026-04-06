@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnePlus 13 All-in-One</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 16px;
+        }
+        .card {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #0f3460;
+        }
+        .card.signal { border-left-color: #e94560; }
+        .card.volte { border-left-color: #00b4d8; }
+        .card.imei { border-left-color: #06d6a0; }
+        h1 { color: #fff; font-size: 20px; text-align: center; }
+        h2 { color: #fff; font-size: 16px; margin: 0 0 8px 0; }
+        p { margin: 4px 0; font-size: 14px; color: #aaa; }
+        a { color: #00b4d8; text-decoration: none; }
+        .status { color: #06d6a0; font-weight: bold; }
+        .credits { font-size: 12px; color: #666; text-align: center; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <h1>OnePlus 13 All-in-One</h1>
+
+    <div class="card signal">
+        <h2>Signal Fix</h2>
+        <p class="status">Active</p>
+        <p>Fixes signal for OnePlus 13 CN on OxygenOS 15/16</p>
+        <p>Use "Action" button before OTA reboot to fix bootloop</p>
+        <p><a href="https://github.com/K58/fix-signal-oneplus13">Source: K58/Fly</a></p>
+    </div>
+
+    <div class="card volte">
+        <h2>VoLTE & WiFi Calling</h2>
+        <p class="status">Active</p>
+        <p>Enables VoLTE, VoWiFi, VT, and RCS features</p>
+        <p><a href="https://github.com/symbuzzer/Volte-Wifi-Calling-Enabler">Source: symbuzzer</a></p>
+    </div>
+
+    <div class="card imei">
+        <h2>IMEI Backup</h2>
+        <p class="status">Completed at install</p>
+        <p>Partitions backed up: modemst1, modemst2, fsc, fsg, persist, ocdt</p>
+        <p>Location: /sdcard/OnePlus13_IMEI_Backup/</p>
+    </div>
+
+    <div class="credits">
+        <p>Credits: K58/Fly, rapperskull, @koaaN, @docnok63, symbuzzer/Ali Beyaz, <a href="https://github.com/sanic732">Sanic27</a><br>
+        <p>License: GPLv3</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+id=oneplus13-all-in-one
+name=OnePlus 13 All-in-One (Signal Fix + VoLTE/WiFi + IMEI Backup)
+version=v1.0
+versionCode=100
+author=Sanic27 (based on work by K58/Fly, symbuzzer/Ali Beyaz, rapperskull, @koaaN, @docnok63)
+description=Combined module: Fix signal for OP13 CN on OOS 15/16, enable VoLTE & WiFi Calling, backup IMEI partitions. Press "Action" before OTA reboot to fix bootloop.
+updateJson=https://raw.githubusercontent.com/sanic732/OnePlus13-All-in-One/main/update.json
