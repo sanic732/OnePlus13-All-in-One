@@ -99,6 +99,7 @@ This module is a combined fork of the following projects:
 - **@docnok63** (XDA Forums) — contribution to signal fix
 - **[vadimka-85](https://4pda.to/forum/index.php?showuser=1435250)** (4PDA) — guide ["Резервное копирование критических разделов"](https://4pda.to/forum/index.php?showtopic=1096928&view=findpost&p=135328236)
 - **[DroidWin](https://droidwin.com/which-partition-does-oneplus-store-imei-number/)** — IMEI partition research
+- **[WhiteCrow](https://4pda.to/forum/index.php?showtopic=1013097&view=findpost&p=143961171)** (4PDA) — identifying the root cause of VoLTE/VoWiFi package drops
 
 ## License
 
