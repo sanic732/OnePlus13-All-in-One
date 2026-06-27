@@ -7,6 +7,7 @@
 #                Contributors: @koaaN, @docnok63 (XDA), rapperskull (GitHub)
 #   VoLTE/WiFi:  symbuzzer/Ali Beyaz (https://github.com/symbuzzer/Volte-Wifi-Calling-Enabler) — GPLv3
 #   IMEI Backup: Sanic27 — based on 4PDA community guides for Qualcomm devices
+#   IMS Pkg Fix: WhiteCrow (4PDA) — identified disabled packages as VoLTE/VoWiFi root cause
 #
 # This combined module is licensed under GPLv3.
 
@@ -29,7 +30,7 @@ fi
 
 ui_print ""
 ui_print "============================================"
-ui_print "  OnePlus 13 All-in-One Module v1.0"
+ui_print "  OnePlus 13 All-in-One Module v1.1"
 ui_print "  Signal Fix + VoLTE/WiFi + IMEI Backup"
 ui_print "============================================"
 ui_print ""
@@ -38,7 +39,7 @@ ui_print ""
 # IMEI Partition Backup
 ##########################
 
-ui_print "[1/3] IMEI & Critical Partitions Backup"
+ui_print "[1/4] IMEI & Critical Partitions Backup"
 ui_print "----------------------------------------"
 
 BACKUP_DIR="/sdcard/OnePlus13_IMEI_Backup"
@@ -215,7 +216,7 @@ fi
 # Signal Fix Setup
 ##########################
 
-ui_print "[2/3] Signal Fix (by K58/Fly)"
+ui_print "[2/4] Signal Fix (by K58/Fly)"
 ui_print "----------------------------------------"
 ui_print "  Installing oplusstanvbk partition fix..."
 ui_print "  Will be applied on next boot (post-fs-data)"
@@ -225,9 +226,34 @@ ui_print ""
 # VoLTE & WiFi Calling
 ##########################
 
-ui_print "[3/3] VoLTE & WiFi Calling (by symbuzzer)"
+ui_print "[3/4] VoLTE & WiFi Calling (by symbuzzer)"
 ui_print "----------------------------------------"
 ui_print "  System properties will be applied on boot"
+ui_print ""
+
+##########################
+# IMS / VoWiFi Package Check
+# Fix by WhiteCrow (4PDA) — packages may be disabled after Android 15→16 upgrade
+# https://4pda.to/forum/index.php?showuser=407801
+##########################
+
+ui_print "[4/4] IMS & VoWiFi Package Health Check"
+ui_print "----------------------------------------"
+ui_print "  Checking critical IMS/VoWiFi packages..."
+ui_print "  (Fix by WhiteCrow, 4PDA — Android 15->16 bug)"
+ui_print ""
+
+for PKG in org.codeaurora.ims vendor.qti.iwlan com.qualcomm.qti.cne; do
+  STATE=$(pm list packages -d 2>/dev/null | grep "$PKG")
+  if [ -n "$STATE" ]; then
+    ui_print "  [!] $PKG is DISABLED — enabling..."
+    pm enable --user 0 "$PKG" >/dev/null 2>&1
+    ui_print "      Done."
+  else
+    ui_print "  [OK] $PKG is enabled"
+  fi
+done
+
 ui_print ""
 
 ##########################
@@ -240,6 +266,7 @@ ui_print ""
 ui_print "  > Signal Fix:    active after reboot"
 ui_print "  > VoLTE/WiFi:    active after reboot"
 ui_print "  > IMEI Backup:   check /sdcard/"
+ui_print "  > IMS Packages:  verified/fixed"
 ui_print ""
 ui_print "  OTA UPDATE: Press 'Action' button in"
 ui_print "  module manager BEFORE rebooting after OTA!"
