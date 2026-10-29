@@ -3,7 +3,7 @@
 # Read-only: collects information, changes nothing.
 # Long digit sequences (IMEI, IMSI, ICCID, phone numbers) are masked in the report.
 
-DIAG_VER="v0.6"
+DIAG_VER="v0.7"
 BYNAME_DIR="/dev/block/bootdevice/by-name"
 AIO_DIR="/data/adb/modules/oneplus13-all-in-one"
 
@@ -421,6 +421,16 @@ done
 
 log_file "  --- logcat crash buffer ---"
 dump 400 logcat -b crash -d
+
+# IMS registration attempts and failures (all levels), e.g. registrationDisconnected / CODE_REGISTRATION_ERROR
+IMS_FAILS=$(logcat -d -b main,system,radio 2>/dev/null | grep -cE 'CODE_REGISTRATION_ERROR')
+log "  IMS registration errors in current log: ${IMS_FAILS:-0}"
+log_file ""
+log_file "  --- logcat (IMS registration, all levels) ---"
+logcat -d -b main,system,radio -v time 2>/dev/null \
+  | grep -iE 'QImsService|ImsRegistration|registrationDisconnected|onRegist|ImsReasonInfo|SipCode|sip.*(403|404|408|488|503)|ims.*pdn|apn.*ims' \
+  | tail -n 200 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
+log_file ""
 
 log_file "  --- logcat (radio/IMS errors, current buffer) ---"
 logcat -d -b main,system,radio -v time '*:E' 2>/dev/null | grep -iE 'ims|volte|telephony|ril|phone' \

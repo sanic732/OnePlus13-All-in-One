@@ -1,5 +1,9 @@
 # Changelog — OnePlus 13 Diagnostic
 
+### v0.7-diag (2026-10-29)
+- IMS registration log: all levels from QImsService / ImsRegistration / ImsReasonInfo / SIP codes,
+  number of `CODE_REGISTRATION_ERROR` on screen
+
 ### v0.6-diag (2026-10-29)
 - APN query: removed the `edited_status` column, it does not exist on OxygenOS and made the whole query fail
 
