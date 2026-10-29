@@ -1,5 +1,10 @@
 # Changelog — OnePlus 13 Diagnostic
 
+### v0.5-diag (2026-10-29)
+- APN check fixed: a filtered `content query --where numeric=...` returns no rows on OxygenOS,
+  so the whole APN table is read and filtered in the script; preferred APN added.
+  "could not read" is reported instead of a false "NOT FOUND" when the table is not readable
+
 ### v0.4-diag (2026-10-29)
 - Per-SIM carrier config values (VoLTE / VoWiFi / VT available) parsed from `dumpsys carrier_config`
   and shown on screen; removed `cmd phone cc get-value` (denied even for root) and the empty `dumpsys phone` check

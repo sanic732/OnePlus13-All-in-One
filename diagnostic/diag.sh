@@ -3,7 +3,7 @@
 # Read-only: collects information, changes nothing.
 # Long digit sequences (IMEI, IMSI, ICCID, phone numbers) are masked in the report.
 
-DIAG_VER="v0.4"
+DIAG_VER="v0.5"
 BYNAME_DIR="/dev/block/bootdevice/by-name"
 AIO_DIR="/data/adb/modules/oneplus13-all-in-one"
 
@@ -283,22 +283,24 @@ for S in $SIM_SLOTS; do
   dump 20 cmd phone ims get-ims-service -s "$S" -d
 done
 
-# APNs: IMS registration needs an APN of type "ims" for the SIM operator
+# APNs: IMS registration needs an APN of type "ims" for the SIM operator.
+# A filtered query (--where numeric=...) returns nothing on OxygenOS, so read the whole table and filter here.
 SIM_NUMERIC=$(getprop gsm.sim.operator.numeric | cut -d, -f1)
-if [ -n "$SIM_NUMERIC" ]; then
-  APNS=$(content query --uri content://telephony/carriers --where "numeric='${SIM_NUMERIC}'" \
-    --projection name:apn:type:protocol:roaming_protocol:carrier_enabled:edited_status 2>&1)
-  log ""
-  if echo "$APNS" | grep -qiE 'type=[^,]*ims'; then
-    log "  APN of type ims for ${SIM_NUMERIC}: present"
-  else
-    log "  APN of type ims for ${SIM_NUMERIC}: NOT FOUND"
-  fi
-  log_file "  --- APNs for ${SIM_NUMERIC} ---"
-  echo "$APNS" | head -n 40 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
-  log_file ""
+APN_ALL=$(content query --uri content://telephony/carriers \
+  --projection _id:name:apn:type:numeric:protocol:carrier_enabled:edited_status 2>&1)
+APN_SIM=$(echo "$APN_ALL" | grep -E "numeric=${SIM_NUMERIC:-none}(,|$)")
+log ""
+if ! echo "$APN_ALL" | grep -q '^Row:'; then
+  log "  APNs: could not read the APN table (see report)"
+elif echo "$APN_SIM" | grep -qiE 'type=[^,]*ims'; then
+  log "  APN of type ims for ${SIM_NUMERIC}: present"
+else
+  log "  APN of type ims for ${SIM_NUMERIC}: NOT FOUND ($(echo "$APN_SIM" | grep -c '^Row:') APNs for this operator)"
 fi
-
+log_file "  --- APNs for ${SIM_NUMERIC} (total rows in table: $(echo "$APN_ALL" | grep -c '^Row:')) ---"
+echo "${APN_SIM:-$APN_ALL}" | head -n 40 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
+log_file "  --- preferred APN ---"
+dump 5 content query --uri content://telephony/carriers/preferapn --projection _id:name:apn:type:numeric
 log_file ""
 
 log_file ""
