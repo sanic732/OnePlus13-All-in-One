@@ -1,6 +1,6 @@
 id=oneplus13-diagnostic
 name=OnePlus 13 Diagnostic (Data Collector)
-version=v0.5-diag
-versionCode=5
+version=v0.6-diag
+versionCode=6
 author=Sanic27
 description=Read-only diagnostic. Collects device info, IMS/VoLTE status, carrier config, modem MBN list and crash logs. Press "Action" to create a new report at any time. Does NOT modify anything.

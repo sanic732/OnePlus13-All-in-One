@@ -3,7 +3,7 @@
 # Read-only: collects information, changes nothing.
 # Long digit sequences (IMEI, IMSI, ICCID, phone numbers) are masked in the report.
 
-DIAG_VER="v0.5"
+DIAG_VER="v0.6"
 BYNAME_DIR="/dev/block/bootdevice/by-name"
 AIO_DIR="/data/adb/modules/oneplus13-all-in-one"
 
@@ -287,7 +287,7 @@ done
 # A filtered query (--where numeric=...) returns nothing on OxygenOS, so read the whole table and filter here.
 SIM_NUMERIC=$(getprop gsm.sim.operator.numeric | cut -d, -f1)
 APN_ALL=$(content query --uri content://telephony/carriers \
-  --projection _id:name:apn:type:numeric:protocol:carrier_enabled:edited_status 2>&1)
+  --projection _id:name:apn:type:numeric:protocol:carrier_enabled 2>&1)
 APN_SIM=$(echo "$APN_ALL" | grep -E "numeric=${SIM_NUMERIC:-none}(,|$)")
 log ""
 if ! echo "$APN_ALL" | grep -q '^Row:'; then

@@ -1,5 +1,8 @@
 # Changelog — OnePlus 13 Diagnostic
 
+### v0.6-diag (2026-10-29)
+- APN query: removed the `edited_status` column, it does not exist on OxygenOS and made the whole query fail
+
 ### v0.5-diag (2026-10-29)
 - APN check fixed: a filtered `content query --where numeric=...` returns no rows on OxygenOS,
   so the whole APN table is read and filtered in the script; preferred APN added.
