@@ -3,7 +3,7 @@
 # Read-only: collects information, changes nothing.
 # Long digit sequences (IMEI, IMSI, ICCID, phone numbers) are masked in the report.
 
-DIAG_VER="v0.2"
+DIAG_VER="v0.3"
 BYNAME_DIR="/dev/block/bootdevice/by-name"
 AIO_DIR="/data/adb/modules/oneplus13-all-in-one"
 
@@ -79,6 +79,7 @@ log "  Android:       $(getprop ro.build.version.release) (SDK $(getprop ro.buil
 log "  Build:         $(getprop ro.build.display.id)"
 log "  Security:      $(getprop ro.build.version.security_patch)"
 log "  Baseband:      $(getprop gsm.version.baseband)"
+log "  Region:        $(getprop persist.sys.oplus.region) (regionmark $(getprop ro.vendor.oplus.regionmark), my_region $(getprop ro.oplus.image.my_region.type), country $(getprop sys.region.switch.country))"
 log_file "  Fingerprint:   $(getprop ro.build.fingerprint)"
 log_file "  OTA version:   $(getprop ro.build.version.ota)"
 
@@ -277,9 +278,19 @@ for S in $SIM_SLOTS; do
     log "    $K = ${V:-?}"
   done
   log_file ""
-  dump 20 cmd phone ims get-ims-service -s "$S"
+  # Raw output, in case the "KEY = VALUE" format above does not match
+  dump 10 cmd phone cc get-value -s "$S" carrier_volte_available_bool
   dump 20 cmd phone ims get-ims-service -s "$S" -c
+  dump 20 cmd phone ims get-ims-service -s "$S" -d
 done
+
+log ""
+IMS_LINES=$(dumpsys phone 2>/dev/null | grep -iE 'isImsRegistered|mImsRegistered|ImsRegistrationState|mImsRegistrationTech|isVolteEnabled|isWifiCallingEnabled|isVideoEnabled' | head -n 40)
+IMS_REG=$(echo "$IMS_LINES" | grep -iE 'isImsRegistered|mImsRegistered' | head -1 | sed 's/^ *//')
+log "  IMS registration: ${IMS_REG:-unknown (see report)}"
+log_file "  --- dumpsys phone (IMS registration) ---"
+echo "$IMS_LINES" | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
+log_file ""
 
 log_file ""
 log_file "  --- SIM info (VoLTE/VoWiFi user toggles) ---"
@@ -302,9 +313,12 @@ log_file ""
 log_file "  --- telephony_ims (ImsResolver) ---"
 dump 120 dumpsys telephony_ims
 
-log_file "  --- carrier_config (IMS related keys) ---"
-dumpsys carrier_config 2>/dev/null | grep -iE 'volte|vowifi|wfc|ims|vt_available|enhanced_4g|carrier_name|config_id|carrierid' \
-  | head -n 150 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
+# The dump starts with the AOSP default values; section headers (lines without "=")
+# show which values are defaults and which are the per-SIM configs / overrides
+log_file "  --- carrier_config (key VoLTE values per section) ---"
+CC_RE='carrier_volte_available_bool|carrier_wfc_ims_available_bool|carrier_vt_available_bool|carrier_volte_provisioning_required_bool|hide_enhanced_4g_lte_bool|editable_enhanced_4g_lte_bool|carrier_config_version_string'
+dumpsys carrier_config 2>/dev/null | grep -nE "(${CC_RE}) =|[Pp]hone ?[Ii]d|^[^=]{3,100}$" \
+  | head -n 250 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
 log_file ""
 
 ##########################
@@ -368,23 +382,25 @@ fi
 # 10. Crashes
 ##########################
 
-section 10/10 "Crash Logs (Phone / IMS)"
+section 10/10 "Crash Logs"
 
 DROPBOX_LIST=$(dumpsys dropbox 2>/dev/null | grep -E 'app_crash|app_anr|native_crash|TOMBSTONE|system_server_crash|wtf' | tail -n 60)
-PHONE_CRASHES=$(dumpsys dropbox --print system_app_crash 2>/dev/null | grep -cE '^Process: (com\.android\.phone|org\.codeaurora\.ims|com\.oplus)')
 log "  Dropbox crash/ANR entries (last 60): $(echo "$DROPBOX_LIST" | grep -c .)"
-log "  system_app_crash by phone/IMS/oplus: ${PHONE_CRASHES:-0}"
 
 log_file ""
 log_file "  --- Dropbox entries (time + tag) ---"
 echo "$DROPBOX_LIST" | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
 log_file ""
 
-for TAG in system_app_crash system_app_anr data_app_crash system_app_native_crash; do
-  log_file "  --- dropbox $TAG (phone / ims / telephony processes) ---"
-  dumpsys dropbox --print "$TAG" 2>/dev/null \
-    | grep -E -A40 '^Process: (com\.android\.phone|org\.codeaurora\.ims|vendor\.qti|com\.qualcomm|com\.oplus\.(telephony|sim|network|phone))' \
-    | head -n 300 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
+# Every crash/ANR entry: time + process on screen, first lines of each entry in the file
+for TAG in system_app_crash data_app_crash system_app_anr data_app_anr system_app_native_crash data_app_native_crash; do
+  ENTRIES=$(dumpsys dropbox --print "$TAG" 2>/dev/null)
+  [ -n "$ENTRIES" ] || continue
+  echo "$ENTRIES" | grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2} .*${TAG}|^Process: " | tail -n 20 \
+    | while IFS= read -r line; do log "    $line"; done
+  log_file "  --- dropbox $TAG ---"
+  echo "$ENTRIES" | awk '/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] / { n = 0 } { if (n++ < 30) print }' \
+    | tail -n 300 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
   log_file ""
 done
 

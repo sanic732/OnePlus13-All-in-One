@@ -1,5 +1,14 @@
 # Changelog — OnePlus 13 Diagnostic
 
+### v0.3-diag (2026-10-29)
+- Crash logs: **every** dropbox crash/ANR entry is shown (time + process on screen, first 30 lines in the report).
+  v0.2 only showed phone/IMS processes and missed the daily `data_app_crash` at 00:00
+- IMS registration state from `dumpsys phone` on screen
+- carrier config: only the key VoLTE values, with section headers, so AOSP defaults
+  can be told apart from the per-SIM config (v0.2 showed only the default values)
+- Raw output of `cmd phone cc get-value` and `cmd phone ims get-ims-service -c/-d` in the report
+- Region line on screen (`persist.sys.oplus.region`, regionmark, my_region, country)
+
 ### v0.2-diag (2026-10-29)
 - **Action button**: create a new report at any time (e.g. right after a "Phone has stopped" error)
 - New: IMS / VoLTE status — carrier config keys per SIM slot, `cmd phone ims`, SIM VoLTE/VoWiFi toggles, telephony registry, ImsResolver
