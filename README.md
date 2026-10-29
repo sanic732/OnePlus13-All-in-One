@@ -78,9 +78,54 @@ When updating OxygenOS via OTA:
 ## Warnings
 
 - **DO NOT** install this module on devices other than OnePlus 13 CN
-- **DO NOT** lock the bootloader with this module installed
-- **DO NOT** downgrade from OxygenOS 16.0.3.50x or higher — anti-rollback will **hard brick** your device
+- **DO NOT** downgrade from OxygenOS 16.0.3.50x or higher — anti-rollback will **hard brick** your device.
+  Leaked EDL tools will not help: anti-rollback is designed to block them.
 - **DO NOT** restore IMEI backups from a different device
+
+### Bootloader: never relock
+
+The "Action" bootloop fix **modifies the `dtbo` partition** of the inactive slot (OxygenOS 15 only).
+Root, the signal fix and a modified `dtbo` all mean your system is not stock.
+
+**Do NOT lock the bootloader** while anything is modified in **any** slot (root, `dtbo`, custom kernel, etc.).
+On OnePlus 13 you cannot get back into fastboot with a key combination once the bootloader is locked,
+so a locked modified device is a **hard brick** that you cannot recover yourself.
+
+If you really must relock, **all** of the following must be true first:
+
+- **Every partition in BOTH slots is 100% stock.** After returning to stock, download the full OTA ROM (.zip)
+  for that exact version and local-install it **twice** (install → reboot → install again),
+  so both slots get the stock images.
+- **No downgrade below the anti-rollback version** (see above) while doing this.
+- **Google account removed.** On older ColorOS / OxygenOS builds FRP (activation lock) can block
+  the initial setup after relocking, which effectively bricks the device.
+
+If you are not 100% sure — keep the bootloader unlocked.
+
+(Adapted from the warnings in [K58/fix-signal-oneplus13](https://github.com/K58/fix-signal-oneplus13).)
+
+## Troubleshooting: VoLTE / calls
+
+The module only sets VoLTE/VoWiFi system properties and makes sure the IMS packages are enabled.
+**IMS registration itself is decided by the modem and the carrier** (carrier config, modem MBN profile,
+operator-side provisioning) — no module can force it. Check the status in `*#*#4636#*#*` →
+Phone info → ⋮ → "IMS service status".
+
+- **IMS packages.** `org.codeaurora.ims`, `vendor.qti.iwlan`, `com.qualcomm.qti.cne` are checked and
+  re-enabled on every boot. Log: `/data/adb/modules/oneplus13-all-in-one/ims-check.log`.
+- **Conflicting modules.** Do not install other VoLTE modules (VoLTE switch ColorOS, VoEnabler,
+  Volte-Wifi-Calling-Enabler) together with this one — they set the same properties.
+- **4G data works but calls fail.** Reported by the community (Tele2 KZ): disabling VoLTE for the SIM
+  with [Pixel IMS](https://github.com/kyujin-cho/pixel-volte-patch) + Shizuku, then airplane mode ~30 s,
+  "Reset network settings" and a reboot made calls work (calls then go over 2G/3G). Carrier-specific,
+  not a universal fix.
+- **Flashing `oplusstanvbk` / `my_region` from `COS_FILES_HERE` of SuperHybrid Flasher** is sometimes
+  suggested as a last resort. It can cause a **bootloop** — only do it if you know how to recover
+  (keep SuperHybrid of the *same* version at hand), never touch `modem`, `persist`, `fsg`, `fsc`,
+  `dtbo`, `vendor_boot` without understanding, and do not confuse it with `OOS_FILES_HERE`.
+  This module does **not** do this.
+- **Diagnostics.** Install the [diagnostic module](diagnostic/) and send the report from
+  `/sdcard/OnePlus13_Diagnostic/` — it collects IMS/carrier status and crash logs without changing anything.
 
 ## Based On
 

@@ -10,3 +10,4 @@ MODDIR=${0%/*}
 rm -f "${MODDIR}/nvbk/mounted"
 rm -f "${MODDIR}/post-fs-data.log"
 rm -f "${MODDIR}/dtbo.img"
+rm -f "${MODDIR}/ims-check.log"

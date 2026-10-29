@@ -23,7 +23,7 @@ open-source projects. All original licenses and copyrights are preserved.
 - **Community fix:** WhiteCrow ([4PDA profile](https://4pda.to/forum/index.php?showuser=407801)) —
   identified that `org.codeaurora.ims`, `vendor.qti.iwlan` and `com.qualcomm.qti.cne` may be
   disabled after Android 15→16 upgrade, causing VoLTE/VoWiFi failure on OnePlus 13 (Kyivstar).
-  Auto-enable check added to `customize.sh` based on his findings.
+  Auto-enable check added to `customize.sh` (install) and `service.sh` (every boot) based on his findings.
 
 ## IMEI Backup
 

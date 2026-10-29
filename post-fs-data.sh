@@ -36,6 +36,14 @@ if [ -L "$PART_LINK" ]; then
   DEV="${ORIG}_mod"
 
   if [ -e "$MODFILEMOUNTED" ]; then
+    # The loop device path must be in the form '/dev/block/sdX...' because mark_boot_successful()
+    # will ultimately call gpt_get_header() in gpt-utils and it will try to open the device name
+    # truncated to length 'sizeof("/dev/block/sda") - 1'. This means that if the original partition
+    # is '/dev/block/sdX00', it will try to open '/dev/block/sdX', so if we just use the next available
+    # loop device, it will fail opening '/dev/block/loo'. Using the same prefix as the original
+    # partition will solve the issue, but requires a "hack" to work.
+    # We first associate our patched file with the next available loop device, then we rename it.
+    # (comment by rapperskull, kept from the original)
     LOOP_DEV="$(/system/bin/losetup -sf "$MODFILEMOUNTED")"
     if [ -z "$LOOP_DEV" ]; then
       echo "ERROR: Cannot create loop device"
