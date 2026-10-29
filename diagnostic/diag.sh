@@ -3,7 +3,7 @@
 # Read-only: collects information, changes nothing.
 # Long digit sequences (IMEI, IMSI, ICCID, phone numbers) are masked in the report.
 
-DIAG_VER="v0.3"
+DIAG_VER="v0.4"
 BYNAME_DIR="/dev/block/bootdevice/by-name"
 AIO_DIR="/data/adb/modules/oneplus13-all-in-one"
 
@@ -265,31 +265,40 @@ done
 [ -z "$SIM_SLOTS" ] && SIM_SLOTS=" 0"
 log "  SIM slots checked:$SIM_SLOTS"
 
-CC_KEYS="carrier_volte_available_bool carrier_wfc_ims_available_bool carrier_vt_available_bool \
-editable_enhanced_4g_lte_bool hide_enhanced_4g_lte_bool enhanced_4g_lte_on_by_default_bool \
-carrier_volte_provisioning_required_bool carrier_ims_gba_required_bool carrier_supports_ss_over_ut_bool \
-carrier_default_wfc_ims_enabled_bool show_ims_registration_status_bool"
+# Per-SIM carrier config values from dumpsys (cmd phone cc is denied even for root).
+# Section "Default" = AOSP defaults; mConfigFromDefaultApp / CarrierApp / Override = real values for the SIM
+CC_RE2='^(carrier_volte_available_bool|carrier_wfc_ims_available_bool|carrier_vt_available_bool|carrier_volte_provisioning_required_bool|hide_enhanced_4g_lte_bool|editable_enhanced_4g_lte_bool)$'
+CC_DUMP=$(dumpsys carrier_config 2>/dev/null)
 
 for S in $SIM_SLOTS; do
   log ""
-  log "  Slot $S carrier config:"
-  for K in $CC_KEYS; do
-    V=$(cmd phone cc get-value -s "$S" "$K" 2>/dev/null | tr -d '\r' | sed -n 's/.*= *//p' | head -1)
-    log "    $K = ${V:-?}"
-  done
+  log "  Slot $S carrier config (non-default sections):"
+  echo "$CC_DUMP" | awk -v ph="$S" -v re="$CC_RE2" '
+    /Phone Id = / { p = $NF; next }
+    /^ *(Default Values|mConfigFrom|mRusConfigs|mPersistentOverrideConfigs|mOverrideConfigs|mNoSimConfig)/ { sec = $1; next }
+    p == ph && sec != "Default" && $1 ~ re && $2 == "=" { print sec ": " $1 " = " $3 }' \
+    | while IFS= read -r line; do log "    $line"; done
   log_file ""
-  # Raw output, in case the "KEY = VALUE" format above does not match
-  dump 10 cmd phone cc get-value -s "$S" carrier_volte_available_bool
   dump 20 cmd phone ims get-ims-service -s "$S" -c
   dump 20 cmd phone ims get-ims-service -s "$S" -d
 done
 
-log ""
-IMS_LINES=$(dumpsys phone 2>/dev/null | grep -iE 'isImsRegistered|mImsRegistered|ImsRegistrationState|mImsRegistrationTech|isVolteEnabled|isWifiCallingEnabled|isVideoEnabled' | head -n 40)
-IMS_REG=$(echo "$IMS_LINES" | grep -iE 'isImsRegistered|mImsRegistered' | head -1 | sed 's/^ *//')
-log "  IMS registration: ${IMS_REG:-unknown (see report)}"
-log_file "  --- dumpsys phone (IMS registration) ---"
-echo "$IMS_LINES" | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
+# APNs: IMS registration needs an APN of type "ims" for the SIM operator
+SIM_NUMERIC=$(getprop gsm.sim.operator.numeric | cut -d, -f1)
+if [ -n "$SIM_NUMERIC" ]; then
+  APNS=$(content query --uri content://telephony/carriers --where "numeric='${SIM_NUMERIC}'" \
+    --projection name:apn:type:protocol:roaming_protocol:carrier_enabled:edited_status 2>&1)
+  log ""
+  if echo "$APNS" | grep -qiE 'type=[^,]*ims'; then
+    log "  APN of type ims for ${SIM_NUMERIC}: present"
+  else
+    log "  APN of type ims for ${SIM_NUMERIC}: NOT FOUND"
+  fi
+  log_file "  --- APNs for ${SIM_NUMERIC} ---"
+  echo "$APNS" | head -n 40 | mask | sed 's/^/    /' >> "$REPORT" 2>/dev/null
+  log_file ""
+fi
+
 log_file ""
 
 log_file ""
@@ -344,6 +353,10 @@ log_file "  --- All disabled packages related to telephony ---"
 echo "$DISABLED" | grep -iE 'ims|iwlan|cne|qti|qualcomm|telephony|phone|radio|carrier|oplus\.(sim|telephony|network)' \
   | sed 's/^/    /' >> "$REPORT" 2>/dev/null
 log_file ""
+
+# In-call UI reads the wallpaper; with READ_MEDIA_IMAGES set to "ignore" it crashes ("Phone has stopped")
+INCALL_OP=$(appops get com.android.incallui READ_MEDIA_IMAGES 2>/dev/null | head -n 1)
+log "  com.android.incallui ${INCALL_OP:-READ_MEDIA_IMAGES: ?}"
 
 if [ -f "${AIO_DIR}/ims-check.log" ]; then
   log_file "  --- All-in-One ims-check.log ---"

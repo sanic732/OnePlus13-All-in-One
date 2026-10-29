@@ -1,5 +1,12 @@
 # Changelog — OnePlus 13 Diagnostic
 
+### v0.4-diag (2026-10-29)
+- Per-SIM carrier config values (VoLTE / VoWiFi / VT available) parsed from `dumpsys carrier_config`
+  and shown on screen; removed `cmd phone cc get-value` (denied even for root) and the empty `dumpsys phone` check
+- APN check: is there an APN of type `ims` for the SIM operator; all APNs of the operator in the report
+- `com.android.incallui` READ_MEDIA_IMAGES app-op: "ignore" makes the in-call UI crash
+  ("Phone has stopped") when it reads the wallpaper
+
 ### v0.3-diag (2026-10-29)
 - Crash logs: **every** dropbox crash/ANR entry is shown (time + process on screen, first 30 lines in the report).
   v0.2 only showed phone/IMS processes and missed the daily `data_app_crash` at 00:00
