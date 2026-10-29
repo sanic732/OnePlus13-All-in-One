@@ -30,7 +30,7 @@ fi
 
 ui_print ""
 ui_print "============================================"
-ui_print "  OnePlus 13 All-in-One Module v1.1"
+ui_print "  OnePlus 13 All-in-One Module v1.2"
 ui_print "  Signal Fix + VoLTE/WiFi + IMEI Backup"
 ui_print "============================================"
 ui_print ""
@@ -68,7 +68,15 @@ if [ -n "$BACKUP_DIR" ]; then
 
   if [ -d "$BACKUP_DIR" ]; then
     EXISTING_BACKUP=$(ls -1d "${BACKUP_DIR}"/20* "${BACKUP_DIR}"/backup_* 2>/dev/null | tail -1)
-    if [ -n "$EXISTING_BACKUP" ] && [ -f "${EXISTING_BACKUP}/modemst1.img" ] && [ -f "${EXISTING_BACKUP}/modemst2.img" ]; then
+    # A backup is complete only if every partition present on the device has a non-empty image
+    EXISTING_MISSING=""
+    if [ -n "$EXISTING_BACKUP" ]; then
+      for PART in modemst1 modemst2 fsc fsg persist ocdt; do
+        [ -e "/dev/block/bootdevice/by-name/${PART}" ] || continue
+        [ -s "${EXISTING_BACKUP}/${PART}.img" ] || EXISTING_MISSING="${EXISTING_MISSING} ${PART}"
+      done
+    fi
+    if [ -n "$EXISTING_BACKUP" ] && [ -z "$EXISTING_MISSING" ]; then
       EXISTING_COUNT=$(ls -1d "${BACKUP_DIR}"/20* "${BACKUP_DIR}"/backup_* 2>/dev/null | wc -l)
       ui_print "  Existing backup found: ${EXISTING_BACKUP}"
       ui_print "  Backups on device: ${EXISTING_COUNT}"
@@ -80,7 +88,9 @@ if [ -n "$BACKUP_DIR" ]; then
       ui_print ""
       NEED_BACKUP=false
     elif [ -n "$EXISTING_BACKUP" ]; then
-      ui_print "  Incomplete backup found, creating new one..."
+      ui_print "  Incomplete backup found: ${EXISTING_BACKUP}"
+      ui_print "  Missing:${EXISTING_MISSING}"
+      ui_print "  Creating new full backup (old one is kept)..."
     fi
   fi
 
@@ -130,7 +140,8 @@ if [ -n "$BACKUP_DIR" ]; then
 
         if [ -n "$REAL_PATH" ] && [ -e "$REAL_PATH" ]; then
           ui_print "  > Backing up ${PART}..."
-          dd if="$REAL_PATH" of="${BACKUP_PATH}/${PART}.img" bs=4096 2>/dev/null
+          echo "=== ${PART} (${REAL_PATH})" >> "${BACKUP_PATH}/backup.log"
+          dd if="$REAL_PATH" of="${BACKUP_PATH}/${PART}.img" bs=4096 >> "${BACKUP_PATH}/backup.log" 2>&1
           if [ $? -eq 0 ] && [ -f "${BACKUP_PATH}/${PART}.img" ]; then
             SIZE=$(wc -c < "${BACKUP_PATH}/${PART}.img" 2>/dev/null)
             if [ -n "$SIZE" ] && [ "$SIZE" -gt 0 ] 2>/dev/null; then
@@ -244,8 +255,9 @@ ui_print "  (Fix by WhiteCrow, 4PDA — Android 15->16 bug)"
 ui_print ""
 
 for PKG in org.codeaurora.ims vendor.qti.iwlan com.qualcomm.qti.cne; do
-  STATE=$(pm list packages -d 2>/dev/null | grep "$PKG")
-  if [ -n "$STATE" ]; then
+  if ! pm list packages 2>/dev/null | grep -qx "package:$PKG"; then
+    ui_print "  [--] $PKG is not installed"
+  elif pm list packages -d 2>/dev/null | grep -qx "package:$PKG"; then
     ui_print "  [!] $PKG is DISABLED — enabling..."
     pm enable --user 0 "$PKG" >/dev/null 2>&1
     ui_print "      Done."
@@ -254,6 +266,9 @@ for PKG in org.codeaurora.ims vendor.qti.iwlan com.qualcomm.qti.cne; do
   fi
 done
 
+ui_print ""
+ui_print "  This check also runs on every boot (service.sh),"
+ui_print "  log: /data/adb/modules/oneplus13-all-in-one/ims-check.log"
 ui_print ""
 
 ##########################
